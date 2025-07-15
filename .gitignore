@@ -1,0 +1,4 @@
+node_modules
+.env
+updated_esp8266.txt
+env_example.sh
