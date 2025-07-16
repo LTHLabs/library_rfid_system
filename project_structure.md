@@ -1,169 +1,38 @@
 # 📚 RFID Library System
 
-## 🗂️ Project Structure
+## 🏗️ Project Structure
 
-```
+📂 Struktur Folder:
 rfid-library-system/
-├── package.json
 ├── server.js
 ├── .env
-├── .gitignore
-├── README.md
 ├── models/
-│   ├── User.js
-│   └── Transaction.js
-├── routes/
-│   └── api.js
-├── services/
-│   └── mqttService.js
-└── public/
-    └── index.html
+│ ├── User.js
+│ └── Transaction.js
+├── routes/api.js
+├── services/mqttService.js
+├── public/
+│ ├── index.html (dashboard admin)
+│ ├── addUser.html (form registrasi user)
+│ └── js/
+│ ├── app.js (dashboard logic)
+│ └── register.js (ambil UID via MQTT & kirim user baru)
 ```
 
-## 🚀 Setup Instructions
-
-Siap! Kita lanjut ke **Installation Steps - Clone/Setup Project** tahap demi tahap, untuk menyiapkan struktur proyek backend kamu.
-
----
-
-## ✅ **Langkah 1: Buat Folder Project**
-
-Buka terminal kamu dan jalankan:
-
-```bash
-mkdir library-rfid-system
-cd library-rfid-system
-```
-
----
-
-## ✅ **Langkah 2: Inisialisasi Proyek Node.js**
-
-```bash
-npm init -y
-```
-
-Ini akan menghasilkan file `package.json` untuk menyimpan daftar dependencies dan konfigurasi project.
-
----
-
-## ✅ **Langkah 3: Install Dependencies**
-
-### 📦 Dependencies utama:
-
-```bash
-npm install express mongoose mqtt cors dotenv
-```
-
-Kegunaan:
-
-* `express`: backend web server
-* `mongoose`: ODM untuk MongoDB
-* `mqtt`: koneksi MQTT dengan ESP8266
-* `cors`: mengizinkan koneksi dari frontend
-* `dotenv`: membaca file `.env`
-
-### 📦 Dependencies development (opsional):
-
-```bash
-npm install --save-dev nodemon
-```
-
-`nodemon` membantu restart otomatis saat file diubah.
-
----
-
-## ✅ **Langkah 4: Buat Struktur Folder**
-
-```bash
-mkdir models public routes middleware utils esp8266
-mkdir public/css public/js
-touch server.js .env .gitignore README.md
-```
-
-> Catatan:
-
-* `models`: tempat file model MongoDB (User, Book, Transaction)
-* `routes`: API endpoint
-* `middleware`: seperti autentikasi, validasi
-* `utils`: file koneksi MQTT dan MongoDB
-* `esp8266`: untuk menyimpan kode program NodeMCU
-* `public`: frontend HTML/CSS/JS
-
----
-
-## ✅ **Langkah 5: Isi `.gitignore`**
-
-Supaya file sensitif tidak ikut ke GitHub:
-
-`.gitignore`:
-
-```
-node_modules/
-.env
-```
-
----
-
-## ✅ **Langkah 6: Tambahkan Script Nodemon (opsional)**
-
-Di dalam `package.json`, tambahkan:
-
-```json
-"scripts": {
-  "start": "node server.js",
-  "dev": "nodemon server.js"
-}
-
-
-## ✅ **Langkah 7: Jalankan Server**
-
-npm run dev
-```
-
-✅ MongoDB Connected
-🚀 Server running at http://localhost:3000
+## 🚀 Quick Start
 
 ### 1. Install Dependencies
 ```bash
 npm install
 ```
 
-### 2. Environment Configuration
-Create `.env` file with your MongoDB and MQTT credentials:
-```env
-PORT=3000
-NODE_ENV=development
-
-# MongoDB Configuration
-MONGODB_URI=mongodb+srv://username:password@cluster0.mongodb.net/rfid_library
-
-# MQTT Configuration (HiveMQ Cloud)
-MQTT_HOST=your-hivemq-host.s1.eu.hivemq.cloud
-MQTT_PORT=8883
-MQTT_USERNAME=your-mqtt-username
-MQTT_PASSWORD=your-mqtt-password
-MQTT_CLIENT_ID=LibraryServer
-
-# MQTT Topics
-MQTT_TOPIC_SUBSCRIBE=rfid/qu
-MQTT_TOPIC_PUBLISH=rfid/response
+### 2. Setup Environment Variables
+```bash
+cp .env.example .env
+# Edit .env with your MongoDB and MQTT credentials
 ```
 
-### 3. MongoDB Atlas Setup
-1. Create account at [MongoDB Atlas](https://cloud.mongodb.com/)
-2. Create new cluster
-3. Create database user
-4. Get connection string
-5. Update `MONGODB_URI` in `.env`
-
-### 4. HiveMQ Cloud Setup
-1. Create account at [HiveMQ Cloud](https://www.hivemq.com/cloud/)
-2. Create new cluster
-3. Create credentials
-4. Update MQTT settings in `.env`
-
-### 5. Run the Application
+### 3. Run the Server
 ```bash
 # Development mode
 npm run dev
@@ -172,156 +41,183 @@ npm run dev
 npm start
 ```
 
-## 🔧 API Endpoints
+### 4. Access Dashboard
+Open http://localhost:3000 in your browser
+
+## 📊 API Endpoints
 
 ### Users
-- `GET /api/users` - Get all users
+- `GET /api/users` - Get all users (with pagination)
 - `GET /api/users/:id` - Get user by ID
-- `PUT /api/users/:id` - Update user
+- `GET /api/users/:uid/active` - Get user's active transactions
+- `PUT /api/users/:id` - Update user info
 
 ### Transactions
-- `GET /api/transactions` - Get all transactions
-- `GET /api/transactions/:userId` - Get user transactions
+- `GET /api/transactions` - Get all transactions (with pagination)
+- `GET /api/transactions/:id` - Get transaction by ID
+- `GET /api/transactions?action=borrow` - Filter by action
+- `GET /api/transactions?uid=A1B2C3D4` - Filter by UID
 
-### Statistics
-- `GET /api/stats` - Get system statistics
-- `GET /health` - Health check
+### System
+- `GET /api/stats` - Get dashboard statistics
+- `GET /api/mqtt/status` - Check MQTT connection
+- `POST /api/simulate-scan` - Simulate RFID scan (for testing)
 
-## 📡 MQTT Topics
-
-### Subscribe Topics
-- `rfid/qu` - Receives UID from ESP8266
-
-### Publish Topics
-- `rfid/response` - Sends response back to ESP8266
-
-## 🔄 System Flow
-
-1. **ESP8266** reads RFID card → sends UID to `rfid/qu`
-2. **Backend** receives UID via MQTT
-3. **Process Logic**:
-   - New user → Create user record
-   - Existing user → Toggle borrow/return status
-   - Save transaction to database
-4. **Response** sent back to ESP8266 via `rfid/response`
-5. **Frontend** displays real-time data
-
-## 📊 Database Schema
+## 🔧 MongoDB Collections
 
 ### Users Collection
 ```javascript
 {
   uid: "A1B2C3D4",
-  name: "User_A1B2C3D4",
-  email: "",
+  name: "John Doe",
+  email: "john@library.local",
   status: "active",
-  totalBorrowed: 5,
-  totalReturned: 3,
-  currentlyBorrowing: true,
-  createdAt: Date,
-  updatedAt: Date
+  registrationDate: ISODate(),
+  lastActivity: ISODate(),
+  totalBorrows: 5,
+  totalReturns: 4,
+  currentlyBorrowing: true
 }
 ```
 
 ### Transactions Collection
 ```javascript
 {
-  user: ObjectId,
   uid: "A1B2C3D4",
-  type: "borrow", // or "return"
-  bookTitle: "Library Book",
-  timestamp: Date,
-  returnDate: Date,
-  status: "active" // or "completed"
+  userId: ObjectId("..."),
+  action: "borrow",
+  bookId: "BOOK_001",
+  bookTitle: "JavaScript Guide",
+  timestamp: ISODate(),
+  status: "success",
+  deviceInfo: "ESP8266_RFID_Reader",
+  returnDate: null,
+  isReturned: false
 }
 ```
 
-## 🚀 Deployment Options
+## 📡 MQTT Topics
+
+- **Subscribe**: `rfid/qu` - Receives UID from ESP8266
+- **Publish**: `rfid/response` - Sends response to ESP8266
+
+### Message Format
+**From ESP8266**: `A1B2C3D4` (UID only)
+**To ESP8266**: `borrow:A1B2C3D4:John Doe` (action:uid:username)
+
+## 🔄 System Flow
+
+1. ESP8266 scans RFID card → Sends UID to `rfid/qu`
+2. Backend receives UID via MQTT
+3. Backend checks if user exists:
+   - If new → Creates user in MongoDB
+   - If existing → Checks for active transactions
+4. Backend processes action:
+   - No active transaction → Creates "borrow" transaction
+   - Has active transaction → Creates "return" transaction
+5. Backend sends response to ESP8266 via `rfid/response`
+6. Frontend dashboard updates in real-time
+
+## 🖥️ Frontend Features
+
+- **Real-time Dashboard** with live statistics
+- **User Management** with pagination
+- **Transaction History** with filtering
+- **MQTT Status Indicator**
+- **RFID Scan Simulator** for testing
+- **Mobile Responsive** design
+
+## 🐛 Testing
+
+### Test RFID Scan
+```bash
+curl -X POST http://localhost:3000/api/simulate-scan \
+  -H "Content-Type: application/json" \
+  -d '{"uid": "A1B2C3D4"}'
+```
+
+### Test API
+```bash
+# Get users
+curl http://localhost:3000/api/users
+
+# Get transactions
+curl http://localhost:3000/api/transactions
+
+# Get stats
+curl http://localhost:3000/api/stats
+```
+
+## 🌐 Deployment
 
 ### Vercel
 ```bash
-npm install -g vercel
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
 vercel
 ```
 
 ### Railway
 ```bash
-npm install -g @railway/cli
-railway login
-railway init
-railway up
+# Install Railway CLI
+npm i -g @railway/cli
+
+# Deploy
+railway deploy
 ```
 
-### Render
-1. Connect GitHub repository
-2. Set environment variables
-3. Deploy automatically
+### Environment Variables for Deployment
+```env
+NODE_ENV=production
+MONGODB_URI=mongodb+srv://...
+MQTT_HOST=your-mqtt-broker
+MQTT_PORT=8883
+MQTT_USERNAME=your-username
+MQTT_PASSWORD=your-password
+```
 
-## 🔒 Security Features
+## 🔐 Security Notes
 
-- Helmet.js for security headers
-- CORS configuration
-- Environment variables for secrets
-- MongoDB connection security
-- MQTT SSL/TLS encryption
+- Use strong passwords for MongoDB and MQTT
+- Enable MongoDB IP whitelist
+- Use environment variables for sensitive data
+- Enable MQTT SSL/TLS in production
+- Consider rate limiting for API endpoints
 
-## 🎯 Features
-
-- ✅ Real-time RFID processing
-- ✅ User management
-- ✅ Transaction logging
-- ✅ Web dashboard
-- ✅ System health monitoring
-- ✅ Responsive design
-- ✅ Auto-refresh data
-- ✅ MongoDB integration
-- ✅ MQTT communication
-- ✅ REST API
-
-## 📱 Frontend Features
-
-- Modern responsive design
-- Real-time status indicators
-- Auto-refresh functionality
-- Interactive navigation
-- Statistics dashboard
-- User management table
-- Transaction history
-- System health monitoring
-
-## 🔧 ESP8266 Integration
-
-Your existing ESP8266 code will work perfectly with this system. The backend automatically:
-- Subscribes to `rfid/qu` topic
-- Processes incoming UIDs
-- Manages user creation/updates
-- Tracks borrow/return logic
-- Sends responses back to ESP8266
-
-## 🐛 Troubleshooting
+## 🛠️ Troubleshooting
 
 ### Common Issues
 
-1. **MQTT Connection Failed**
-   - Check HiveMQ credentials
-   - Verify SSL/TLS settings
-   - Check firewall settings
+1. **MongoDB Connection Error**
+   - Check MONGODB_URI in .env
+   - Verify network access to MongoDB Atlas
+   - Check username/password
 
-2. **MongoDB Connection Error**
-   - Verify connection string
-   - Check database permissions
-   - Ensure IP whitelist
+2. **MQTT Connection Failed**
+   - Verify MQTT credentials
+   - Check firewall settings
+   - Ensure SSL/TLS is configured
 
 3. **ESP8266 Not Connecting**
    - Check WiFi credentials
    - Verify MQTT broker settings
-   - Check SSL certificate
+   - Check serial monitor for errors
 
-## 📝 Notes
+### Debug Mode
+```bash
+DEBUG=* npm run dev
+```
 
-- System automatically creates users on first RFID scan
-- Borrow/return logic based on user's current status
-- All timestamps in Indonesian timezone
-- Frontend updates every 30 seconds
-- Supports unlimited users and transactions
-- Serverless-ready architecture
+## 📝 License
+
+MIT License - feel free to use in your projects!
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create Pull Request
